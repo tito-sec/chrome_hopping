@@ -1,8 +1,8 @@
 class ChromeHopping < Formula
   desc "macOS menu bar app for instant Chrome profile switching"
-  homepage "https://github.com/tito-sec/chrome_hopping"
+  homepage "https://amirtito.com/chrome_hopping/"
   url "https://github.com/tito-sec/chrome_hopping/archive/refs/tags/v1.0.0.tar.gz"
-  sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+  sha256 "337bc3c2de8314758c70686c3aab2dceb0e280248101affc3ed8239418255a5e"
   license "PolyForm-Noncommercial-1.0.0"
 
   depends_on "python@3.12"
