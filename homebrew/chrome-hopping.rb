@@ -11,7 +11,7 @@ class ChromeHopping < Formula
   def install
     venv = libexec/"venv"
     system "python3.12", "-m", "venv", venv
-    system "#{venv}/bin/pip", "install", "rumps", "--quiet"
+    system "#{venv}/bin/pip", "install", "rumps", "pyobjc", "--quiet"
 
     (libexec/"app").mkpath
     cp "switcher.py", libexec/"app/switcher.py"
@@ -56,19 +56,19 @@ class ChromeHopping < Formula
 
   def caveats
     <<~EOS
-      Run once to start Chrome Hopping and register it as a login item:
+      ✅ Installed! One more step — run this to start Chrome Hopping:
 
         chrome-hopping &
 
-      The ⇄ icon will appear in your menu bar. It will start automatically on login.
+      The ⇄ icon will appear in your menu bar.
+      It will launch automatically every time you log in.
 
-      Two macOS permissions are required on first launch:
-        • Accessibility    — System Settings → Privacy & Security → Accessibility
-        • Full Disk Access — System Settings → Privacy & Security → Full Disk Access
+      On first use, macOS will ask for two permissions:
+        • Accessibility    — to bring Chrome windows to the front
+        • Full Disk Access — to read your Chrome profile list
+      Grant both in System Settings → Privacy & Security.
 
-      Hotkey: ⌘§ cycles through open Chrome profiles.
-
-      To uninstall completely:
+      To uninstall:
         launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.chrome-hopping.plist 2>/dev/null; true
         brew uninstall chrome-hopping
         rm -rf ~/.chrome-hopping ~/.chrome-hopping-custom-names.json \\
