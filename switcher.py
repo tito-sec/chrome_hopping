@@ -172,6 +172,23 @@ def match_windows_to_profiles(profiles, windows):
                 break
     return result
 
+def minimize_windows_by_titles(titles):
+    for title in titles:
+        safe = title[:40].replace('"', '\\"').replace('\\', '\\\\')
+        script = (
+            'tell application "System Events"\n'
+            '    tell process "Google Chrome"\n'
+            '        repeat with win in windows\n'
+            '            if name of win contains "' + safe + '" then\n'
+            '                set value of attribute "AXMinimized" of win to true\n'
+            '                exit repeat\n'
+            '            end if\n'
+            '        end repeat\n'
+            '    end tell\n'
+            'end tell\n'
+        )
+        run_applescript(script)
+
 def focus_windows_by_titles(titles):
     if not titles:
         return
@@ -427,15 +444,39 @@ class ChromeHoppingApp(rumps.App):
         self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem("Quit", callback=rumps.quit_application))
 
+    def _is_option_click(self):
+        """Return True if the Option (⌥) key is held during the current event."""
+        try:
+            from AppKit import NSApp, NSEventModifierFlagOption
+            event = NSApp.currentEvent()
+            if event:
+                return bool(event.modifierFlags() & NSEventModifierFlagOption)
+        except Exception:
+            pass
+        return False
+
+    def _minimize_other_profiles(self, active_folder):
+        """Minimize all Chrome windows belonging to profiles other than active_folder."""
+        titles_to_minimize = []
+        for folder, titles in self.window_map.items():
+            if folder != active_folder:
+                titles_to_minimize.extend(titles)
+        if titles_to_minimize:
+            threading.Thread(target=minimize_windows_by_titles, args=(titles_to_minimize,), daemon=True).start()
+
     def on_profile_click(self, sender):
         folder = self.profile_map.get(sender.title)
         if not folder:
             return
+        option_held = self._is_option_click()
         self._record_usage(folder)
         screen_frame = get_cursor_screen() if self.move_to_cursor_screen else None
         titles = self.window_map.get(folder, [])
         if titles:
-            def focus_and_move(t=titles, sf=screen_frame):
+            def focus_and_move(t=titles, sf=screen_frame, opt=option_held, f=folder):
+                if opt:
+                    self._minimize_other_profiles(f)
+                    time.sleep(0.2)
                 focus_windows_by_titles(t)
                 if sf and t:
                     time.sleep(0.3)
