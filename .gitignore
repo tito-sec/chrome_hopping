@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Runtime files (user-specific, not for the repo)
+error.log
+output.log
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
