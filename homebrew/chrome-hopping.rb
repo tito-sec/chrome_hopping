@@ -3,7 +3,7 @@ class ChromeHopping < Formula
   homepage "https://github.com/tito-sec/Chrome_Hopping"
   url "https://github.com/tito-sec/Chrome_Hopping/archive/refs/tags/v1.0.0.tar.gz"
   sha256 "REPLACE_WITH_ACTUAL_SHA256_AFTER_TAGGING"
-  license "MIT"
+  license "PolyForm-Noncommercial-1.0.0"
 
   depends_on "python@3.12"
   depends_on :macos
