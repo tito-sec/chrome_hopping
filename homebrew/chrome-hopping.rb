@@ -22,12 +22,8 @@ class ChromeHopping < Formula
     SH
   end
 
-  def post_install
-    install_dir = File.expand_path("~/.chrome-hopping")
-    FileUtils.mkdir_p(install_dir)
-
-    plist_path = File.expand_path("~/Library/LaunchAgents/com.chrome-hopping.plist")
-    plist_content = <<~PLIST
+  def caveats
+    plist = <<~PLIST
       <?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
         "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -44,26 +40,27 @@ class ChromeHopping < Formula
         <key>KeepAlive</key>
         <false/>
         <key>StandardErrorPath</key>
-        <string>#{install_dir}/error.log</string>
+        <string>#{var}/log/chrome-hopping/error.log</string>
         <key>StandardOutPath</key>
-        <string>#{install_dir}/output.log</string>
+        <string>#{var}/log/chrome-hopping/output.log</string>
       </dict>
       </plist>
     PLIST
-    File.write(plist_path, plist_content)
-    system "launchctl", "unload", plist_path, err: File::NULL
-    system "launchctl", "load", plist_path
-  end
 
-  def caveats
     <<~EOS
-      Chrome Hopping has been installed and registered as a login item.
-      The ⇄ icon should appear in your menu bar shortly.
+      To start Chrome Hopping and register it as a login item, run:
+
+        mkdir -p ~/Library/LaunchAgents
+        cat > ~/Library/LaunchAgents/com.chrome-hopping.plist << 'EOF'
+      #{plist.strip}
+      EOF
+        launchctl load ~/Library/LaunchAgents/com.chrome-hopping.plist
+
+      The ⇄ icon will appear in your menu bar.
 
       Two macOS permissions are required:
-        • Accessibility   — System Settings → Privacy & Security → Accessibility
+        • Accessibility    — System Settings → Privacy & Security → Accessibility
         • Full Disk Access — System Settings → Privacy & Security → Full Disk Access
-      Add Terminal (or the Python process) to both lists.
 
       Hotkey: ⌘§ cycles through open Chrome profiles.
 
