@@ -17,6 +17,9 @@ build/
 error.log
 output.log
 
+# Claude Code
+.claude/
+
 # Editor
 .vscode/
 .idea/
