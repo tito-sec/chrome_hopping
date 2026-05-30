@@ -4,6 +4,8 @@
 
 If you use multiple Google accounts — work, freelance, personal — Chrome creates a completely separate browser instance for each one. Chrome Hopping lives in your menu bar and lets you jump between them in one click or one keystroke.
 
+Most switchers only handle a single window per profile. Chrome Hopping raises **all open windows** for the selected profile at once. It always places them at **80% of the screen, centered**, so you're never hunting for a window buried behind something else. If you have multiple monitors, it moves the windows to **whichever screen your mouse is on** — no dragging required. You can also **minimize all other profiles** with Option+click to cut the noise, and the **⌘§ hotkey cycles through every profile** — including ones with minimized windows, not just the visible ones.
+
 ![Chrome Hopping menu bar screenshot](docs/screenshot.png)
 
 ---
@@ -55,11 +57,20 @@ Go to **System Settings → Privacy & Security** and add Terminal to both lists.
 | What you want to do | How |
 |---|---|
 | Switch to a profile | Click **⇄** in the menu bar → click the profile name |
-| Cycle profiles with keyboard | Press **⌘§** |
+| Cycle profiles with keyboard | Press **⌘§** — cycles all profiles, even minimized ones |
+| Minimize all other profiles | **Option+click** a profile name |
 | Open a profile that's not running | Click it — Chrome launches automatically |
 | Rename a profile | **⇄** → Rename profile… |
 | Refresh the profile list | **⇄** → Refresh now |
-| Move windows to your current screen | **⇄** → Move to this screen |
+| Move windows to your current screen | **⇄** → ✓ Move to this screen (on by default) |
+
+### What makes it different
+
+- **All windows, not just one** — if a profile has three open windows, all three come to the front.
+- **Always centered at 80%** — windows are placed at 80% of the screen size, centered, so they're never buried or off-screen.
+- **Follows your mouse across monitors** — on multi-screen setups, windows move to whichever screen your cursor is on when you click.
+- **Keyboard cycling includes minimized profiles** — ⌘§ rotates through every profile, not just ones with visible windows.
+- **Option+click to silence other profiles** — minimizes all other profiles' windows instantly so you can focus on one context.
 
 ---
 
