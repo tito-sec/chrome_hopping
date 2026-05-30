@@ -419,6 +419,7 @@ class ChromeHoppingApp(rumps.App):
             self.menu.add(rumps.separator)
 
         self.menu.add(rumps.MenuItem("Rename profile…", callback=self.rename_profile))
+        self.menu.add(rumps.MenuItem("About Chrome Hopping…", callback=self.show_about))
         self.menu.add(rumps.separator)
         screen_label = "✓ Move to this screen" if self.move_to_cursor_screen else "  Move to this screen"
         self.menu.add(rumps.MenuItem(screen_label, callback=self.toggle_screen_move))
@@ -471,6 +472,20 @@ class ChromeHoppingApp(rumps.App):
             self.custom_names[profile["folder"]] = new_name
             save_custom_names(self.custom_names)
             self.update_menu()
+
+    def show_about(self, _=None):
+        script = (
+            'display dialog "Chrome Hopping v1.0.0\n\n'
+            'Instant switching between Chrome profiles\nfrom your macOS menu bar.\n\n'
+            'By Amir Tito\n'
+            'github.com/tito-sec/Chrome_Hopping\n\n'
+            'License: PolyForm Noncommercial 1.0.0\n'
+            'Free for personal use." '
+            'with title "About Chrome Hopping" '
+            'buttons {"Close"} default button "Close" '
+            'with icon note'
+        )
+        run_applescript(script)
 
     def toggle_screen_move(self, _=None):
         self.move_to_cursor_screen = not self.move_to_cursor_screen
