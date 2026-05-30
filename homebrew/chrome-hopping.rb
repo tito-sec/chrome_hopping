@@ -18,12 +18,13 @@ class ChromeHopping < Formula
 
     (bin/"chrome-hopping").write <<~SH
       #!/bin/bash
-      exec "#{venv}/bin/python" "#{libexec}/app/switcher.py" "$@"
-    SH
-  end
+      PLIST="$HOME/Library/LaunchAgents/com.chrome-hopping.plist"
+      INSTALL_DIR="$HOME/.chrome-hopping"
 
-  def caveats
-    plist = <<~PLIST
+      # First-run: register as login item
+      if [ ! -f "$PLIST" ]; then
+        mkdir -p "$INSTALL_DIR" "$HOME/Library/LaunchAgents"
+        cat > "$PLIST" << EOF
       <?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
         "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -40,25 +41,28 @@ class ChromeHopping < Formula
         <key>KeepAlive</key>
         <false/>
         <key>StandardErrorPath</key>
-        <string>#{var}/log/chrome-hopping/error.log</string>
+        <string>$INSTALL_DIR/error.log</string>
         <key>StandardOutPath</key>
-        <string>#{var}/log/chrome-hopping/output.log</string>
+        <string>$INSTALL_DIR/output.log</string>
       </dict>
       </plist>
-    PLIST
-
-    <<~EOS
-      To start Chrome Hopping and register it as a login item, run:
-
-        mkdir -p ~/Library/LaunchAgents
-        cat > ~/Library/LaunchAgents/com.chrome-hopping.plist << 'EOF'
-      #{plist.strip}
       EOF
-        launchctl load ~/Library/LaunchAgents/com.chrome-hopping.plist
+        launchctl load "$PLIST" 2>/dev/null
+      fi
 
-      The ⇄ icon will appear in your menu bar.
+      exec "#{venv}/bin/python" "#{libexec}/app/switcher.py" "$@"
+    SH
+  end
 
-      Two macOS permissions are required:
+  def caveats
+    <<~EOS
+      Run once to start Chrome Hopping and register it as a login item:
+
+        chrome-hopping &
+
+      The ⇄ icon will appear in your menu bar. It will start automatically on login.
+
+      Two macOS permissions are required on first launch:
         • Accessibility    — System Settings → Privacy & Security → Accessibility
         • Full Disk Access — System Settings → Privacy & Security → Full Disk Access
 
