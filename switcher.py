@@ -223,10 +223,8 @@ def is_chrome_running():
 def get_cursor_screen():
     """Returns the frame of the screen where the mouse cursor currently is."""
     try:
-        from Quartz import CGEventCreate, CGEventGetLocation
-        from AppKit import NSScreen
-        event = CGEventCreate(None)
-        pos = CGEventGetLocation(event)
+        from AppKit import NSScreen, NSEvent
+        pos = NSEvent.mouseLocation()
         cx, cy = pos.x, pos.y
         for screen in NSScreen.screens():
             f = screen.frame()
@@ -242,8 +240,13 @@ def move_window_to_screen(window_title, screen_frame):
     """Move a Chrome window to the target screen, using 80% of its area."""
     if not screen_frame:
         return
+    from AppKit import NSScreen
+    # NSScreen uses AppKit coords (y=0 at bottom of primary, increases upward).
+    # AppleScript set position uses Quartz coords (y=0 at top of primary, increases downward).
+    primary_height = NSScreen.screens()[0].frame().size.height
+    quartz_y = primary_height - (screen_frame.origin.y + screen_frame.size.height)
     tx = int(screen_frame.origin.x + screen_frame.size.width * 0.1)
-    ty = int(screen_frame.origin.y + screen_frame.size.height * 0.1)
+    ty = int(quartz_y + screen_frame.size.height * 0.1)
     tw = int(screen_frame.size.width * 0.8)
     th = int(screen_frame.size.height * 0.8)
     safe = window_title[:40].replace('"', '\\"')
