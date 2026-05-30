@@ -69,8 +69,8 @@ class ChromeHopping < Formula
       Hotkey: ⌘§ cycles through open Chrome profiles.
 
       To uninstall completely:
+        launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.chrome-hopping.plist 2>/dev/null; true
         brew uninstall chrome-hopping
-        launchctl unload ~/Library/LaunchAgents/com.chrome-hopping.plist
         rm -rf ~/.chrome-hopping ~/.chrome-hopping-custom-names.json \\
                ~/.chrome-hopping-usage.json \\
                ~/Library/LaunchAgents/com.chrome-hopping.plist

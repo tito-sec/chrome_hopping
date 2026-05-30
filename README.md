@@ -94,7 +94,7 @@ Chrome names each window `<page title> - <profile short name>`. Chrome Hopping p
 ## Uninstall
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.chrome-hopping.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.chrome-hopping.plist 2>/dev/null; true
 rm -rf ~/.chrome-hopping ~/.chrome-hopping-custom-names.json ~/.chrome-hopping-usage.json
 rm ~/Library/LaunchAgents/com.chrome-hopping.plist
 ```
@@ -105,7 +105,7 @@ rm ~/Library/LaunchAgents/com.chrome-hopping.plist
 
 **⇄ icon doesn't appear**
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.chrome-hopping.plist 2>/dev/null
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.chrome-hopping.plist 2>/dev/null; true 2>/dev/null
 launchctl load ~/Library/LaunchAgents/com.chrome-hopping.plist
 ```
 
