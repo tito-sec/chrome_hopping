@@ -756,7 +756,7 @@ class ChromeHoppingApp(rumps.App):
             'if choice is "Website" then\n'
             '    do shell script "open https://amirtito.com/chrome_hopping/"\n'
             'else if choice is "License" then\n'
-            '    do shell script "open https://polyformproject.org/licenses/noncommercial/1.0.0/"\n'
+            '    do shell script "open https://polyformproject.org/licenses/noncommercial/1.0.0"\n'
             'end if'
         )
         run_applescript(script)
