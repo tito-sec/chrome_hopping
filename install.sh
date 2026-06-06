@@ -46,15 +46,16 @@ echo "→  Creating virtual environment..."
 "$SYSTEM_PYTHON" -m venv "$INSTALL_DIR/venv"
 echo "✓  Virtual environment created"
 
-echo "→  Installing rumps..."
-"$INSTALL_DIR/venv/bin/pip" install rumps --quiet
-echo "✓  rumps installed"
+echo "→  Installing dependencies..."
+"$INSTALL_DIR/venv/bin/pip" install rumps pyobjc-framework-Cocoa pyobjc-framework-Quartz --quiet
+echo "✓  Dependencies installed"
 
 # The Python we'll actually run is inside the venv
 VENV_PYTHON="$INSTALL_DIR/venv/bin/python"
 
-# Copy switcher.py
+# Copy app scripts
 cp switcher.py "$INSTALL_DIR/switcher.py"
+cp switch_profile.py "$INSTALL_DIR/switch_profile.py"
 echo "✓  App installed to $INSTALL_DIR"
 
 # Create a launchd plist so it starts on login

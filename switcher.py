@@ -9,15 +9,20 @@ import subprocess
 import json
 import os
 import re
+import shutil
 import threading
 import datetime
 import time
+import tempfile
+import plistlib
 
 CHROME_DIR = os.path.expanduser("~/Library/Application Support/Google/Chrome")
 LOCAL_STATE = os.path.join(CHROME_DIR, "Local State")
 CUSTOM_NAMES_PATH = os.path.expanduser("~/.chrome-hopping-custom-names.json")
 USAGE_PATH = os.path.expanduser("~/.chrome-hopping-usage.json")
 LOG_PATH = os.path.expanduser("~/.chrome-hopping/error.log")
+PROFILE_APPS_DIR = os.path.expanduser("~/Applications/Chrome Profiles")
+SWITCH_CMD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pending_switch.json")
 
 # Chrome's profile color indices map to these colors
 CHROME_COLORS = {
@@ -103,6 +108,15 @@ def load_usage():
 def save_usage(usage):
     with open(USAGE_PATH, "w") as f:
         json.dump(usage, f, indent=2)
+
+def get_display_name(profile, custom_names):
+    if profile["folder"] in custom_names:
+        return custom_names[profile["folder"]]
+    name = profile["name"]
+    cleaned = re.sub(r'\.[a-z]{2,10}$', '', name, flags=re.IGNORECASE)
+    if cleaned == cleaned.lower():
+        cleaned = cleaned.upper()
+    return cleaned
 
 def read_chrome_profiles():
     """Read all profiles from Chrome's Local State file, including color info."""
@@ -211,9 +225,9 @@ tell application "Google Chrome" to activate
         run_applescript(script)
 
 def launch_chrome_profile(folder):
-    """Launch Chrome with a specific profile folder."""
+    """Launch Chrome with a specific profile, restoring the previous session."""
     chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    subprocess.Popen([chrome_path, f"--profile-directory={folder}"])
+    subprocess.Popen([chrome_path, f"--profile-directory={folder}", "--restore-last-session"])
 
 def is_chrome_running():
     out, _ = run_applescript('tell application "System Events" to (name of processes) contains "Google Chrome"')
@@ -265,6 +279,137 @@ def move_window_to_screen(window_title, screen_frame):
     )
     run_applescript(script)
 
+def _make_icon_png(color_hex, letter, size, out_path):
+    from AppKit import (NSImage, NSBitmapImageRep, NSColor, NSBezierPath,
+                        NSString, NSFont, NSMutableParagraphStyle,
+                        NSFontAttributeName, NSForegroundColorAttributeName,
+                        NSParagraphStyleAttributeName)
+    from Foundation import NSMakeRect
+    try:
+        from AppKit import NSTextAlignmentCenter as _CENTER
+    except ImportError:
+        _CENTER = 2
+
+    r = int(color_hex[1:3], 16) / 255.0
+    g = int(color_hex[3:5], 16) / 255.0
+    b = int(color_hex[5:7], 16) / 255.0
+
+    img = NSImage.alloc().initWithSize_((size, size))
+    img.lockFocus()
+    NSColor.colorWithCalibratedRed_green_blue_alpha_(r, g, b, 1.0).setFill()
+    NSBezierPath.bezierPathWithOvalInRect_(NSMakeRect(0, 0, size, size)).fill()
+
+    para = NSMutableParagraphStyle.alloc().init()
+    para.setAlignment_(_CENTER)
+    font = NSFont.boldSystemFontOfSize_(size * 0.45)
+    attrs = {
+        NSFontAttributeName: font,
+        NSForegroundColorAttributeName: NSColor.whiteColor(),
+        NSParagraphStyleAttributeName: para,
+    }
+    ns_str = NSString.stringWithString_(letter)
+    text_h = ns_str.sizeWithAttributes_(attrs).height
+    y = (size - text_h) / 2.0
+    ns_str.drawInRect_withAttributes_(NSMakeRect(0, y, size, text_h), attrs)
+    img.unlockFocus()
+
+    tiff = img.TIFFRepresentation()
+    rep = NSBitmapImageRep.imageRepWithData_(tiff)
+    try:
+        from AppKit import NSBitmapImageFileTypePNG as _PNG
+    except ImportError:
+        _PNG = 4
+    png_data = rep.representationUsingType_properties_(_PNG, None)
+    with open(out_path, 'wb') as f:
+        f.write(bytes(png_data))
+
+
+def make_profile_icns(display_name_str, color_hex, icns_path):
+    letter = (display_name_str[0] if display_name_str else "?").upper()
+    with tempfile.TemporaryDirectory(suffix='.iconset') as iconset_dir:
+        base_png = os.path.join(iconset_dir, '_base.png')
+        _make_icon_png(color_hex, letter, 512, base_png)
+        for fname, sz in [
+            ('icon_16x16.png', 16), ('icon_16x16@2x.png', 32),
+            ('icon_32x32.png', 32), ('icon_32x32@2x.png', 64),
+            ('icon_128x128.png', 128), ('icon_128x128@2x.png', 256),
+            ('icon_256x256.png', 256), ('icon_256x256@2x.png', 512),
+            ('icon_512x512.png', 512),
+        ]:
+            subprocess.run(
+                ['sips', '-z', str(sz), str(sz), base_png,
+                 '--out', os.path.join(iconset_dir, fname)],
+                capture_output=True
+            )
+        os.remove(base_png)
+        subprocess.run(
+            ['iconutil', '-c', 'icns', iconset_dir, '-o', icns_path],
+            capture_output=True, check=True
+        )
+
+
+def generate_profile_apps(profiles, custom_names):
+    os.makedirs(PROFILE_APPS_DIR, exist_ok=True)
+    generated = set()
+
+    install_dir = os.path.dirname(os.path.abspath(__file__))
+    venv_python = os.path.join(install_dir, 'venv', 'bin', 'python')
+    switch_script = os.path.join(install_dir, 'switch_profile.py')
+
+    for profile in profiles:
+        name = get_display_name(profile, custom_names)
+        folder = profile["folder"]
+        color = profile.get("color", FALLBACK_COLORS[0])
+
+        safe_name = re.sub(r'[/:\\*?"<>|]', '-', name)
+        app_name = f"{safe_name}.app"
+        app_path = os.path.join(PROFILE_APPS_DIR, app_name)
+        generated.add(app_name)
+
+        scpt = (
+            f'set pyPath to "{venv_python}"\n'
+            f'set scPath to "{switch_script}"\n'
+            f'set profFolder to "{folder}"\n'
+            'do shell script (quoted form of pyPath) & " " & '
+            '(quoted form of scPath) & " " & '
+            '(quoted form of profFolder) & " >/dev/null 2>&1"'
+        )
+        result = subprocess.run(
+            ['osacompile', '-o', app_path, '-e', scpt],
+            capture_output=True
+        )
+        if result.returncode != 0:
+            log(f"osacompile failed for {name}: {result.stderr.decode()}")
+            continue
+
+        plist_path = os.path.join(app_path, "Contents", "Info.plist")
+        with open(plist_path, 'rb') as f:
+            plist_data = plistlib.load(f)
+        plist_data['CFBundleName'] = name
+        plist_data['CFBundleDisplayName'] = name
+        plist_data['LSUIElement'] = True
+        with open(plist_path, 'wb') as f:
+            plistlib.dump(plist_data, f)
+
+        resources_dir = os.path.join(app_path, "Contents", "Resources")
+        icon_name = plist_data.get('CFBundleIconFile', 'applet')
+        if not icon_name.endswith('.icns'):
+            icon_name += '.icns'
+        icns_path = os.path.join(resources_dir, icon_name)
+        try:
+            make_profile_icns(name, color, icns_path)
+        except Exception as e:
+            log(f"Icon generation failed for {name}: {e}")
+
+    for item in os.listdir(PROFILE_APPS_DIR):
+        if item.endswith(".app") and item not in generated:
+            shutil.rmtree(os.path.join(PROFILE_APPS_DIR, item), ignore_errors=True)
+
+    subprocess.run(['mdimport', PROFILE_APPS_DIR], capture_output=True)
+    log(f"Generated {len(profiles)} profile apps in {PROFILE_APPS_DIR}")
+    return len(profiles)
+
+
 def ask_text(prompt, default=""):
     script = f'display dialog "{prompt}" default answer "{default}" with title "Chrome Hopping"'
     result, _ = run_applescript(script)
@@ -301,6 +446,13 @@ class ChromeHoppingApp(rumps.App):
         # Auto-refresh every 15 seconds + Chrome restart detection
         self.timer = rumps.Timer(self.auto_refresh, 15)
         self.timer.start()
+
+        # Generate Dock/Spotlight .app bundles shortly after startup
+        rumps.Timer(self._init_generate_apps, 3).start()
+
+        # Poll for switch commands from .app bundle launchers (they lack Accessibility)
+        self.cmd_timer = rumps.Timer(self._check_switch_command, 0.5)
+        self.cmd_timer.start()
 
         # Register global keyboard shortcut ⌘§
         self._setup_hotkey()
@@ -366,6 +518,65 @@ class ChromeHoppingApp(rumps.App):
         self._record_usage(profile["folder"])
         threading.Thread(target=focus_windows_by_titles, args=(titles,), daemon=True).start()
 
+    def _init_generate_apps(self, timer):
+        timer.stop()
+        self._do_generate_apps()
+
+    def _do_generate_apps(self):
+        try:
+            generate_profile_apps(self.profiles, self.custom_names)
+        except Exception as e:
+            log(f"generate_profile_apps error: {e}")
+
+    def generate_dock_apps(self, _=None):
+        try:
+            count = generate_profile_apps(self.profiles, self.custom_names)
+        except Exception as e:
+            log(f"generate_profile_apps error: {e}")
+            show_alert(f"Failed to generate apps:\n{e}")
+            return
+        try:
+            rumps.notification(
+                "Chrome Hopping",
+                f"{count} profile apps updated",
+                "Find them in ~/Applications/Chrome Profiles — drag any to the Dock or search by name in Spotlight."
+            )
+        except Exception:
+            pass
+
+    def _check_switch_command(self, _=None):
+        if not os.path.exists(SWITCH_CMD_PATH):
+            return
+        try:
+            with open(SWITCH_CMD_PATH) as f:
+                cmd = json.load(f)
+            os.remove(SWITCH_CMD_PATH)
+            folder = cmd.get("folder")
+            if folder:
+                self.refresh_data()
+                self._switch_to_folder(folder)
+        except Exception as e:
+            log(f"switch command error: {e}")
+
+    def _switch_to_folder(self, folder):
+        self._record_usage(folder)
+        screen_frame = get_cursor_screen() if self.move_to_cursor_screen else None
+        titles = self.window_map.get(folder, [])
+        if titles:
+            def focus_and_move(t=titles, sf=screen_frame):
+                focus_windows_by_titles(t)
+                if sf and t:
+                    time.sleep(0.3)
+                    move_window_to_screen(t[0], sf)
+            threading.Thread(target=focus_and_move, daemon=True).start()
+        else:
+            def launch_and_refresh():
+                launch_chrome_profile(folder)
+                time.sleep(3)
+                self.refresh_data()
+                rumps.Timer(self._do_menu_update, 0.1).start()
+            threading.Thread(target=launch_and_refresh, daemon=True).start()
+
     def auto_refresh(self, _=None):
         # This is called from rumps.Timer which runs on the main thread - safe to update menu
         chrome_running = is_chrome_running()
@@ -374,7 +585,10 @@ class ChromeHoppingApp(rumps.App):
         if not self._chrome_was_running and chrome_running:
             log("Chrome launched - refreshing window map")
         self._chrome_was_running = chrome_running
+        old_folders = {p["folder"] for p in self.profiles}
         self.refresh_data()
+        if {p["folder"] for p in self.profiles} != old_folders:
+            self._do_generate_apps()
         self.update_menu()
 
     def refresh_data(self):
@@ -387,13 +601,7 @@ class ChromeHoppingApp(rumps.App):
         save_usage(self.usage)
 
     def display_name(self, profile):
-        if profile["folder"] in self.custom_names:
-            return self.custom_names[profile["folder"]]
-        name = profile["name"]
-        cleaned = re.sub(r'\.[a-z]{2,10}$', '', name, flags=re.IGNORECASE)
-        if cleaned == cleaned.lower():
-            cleaned = cleaned.upper()
-        return cleaned
+        return get_display_name(profile, self.custom_names)
 
     def sorted_profiles(self):
         """Sort by usage count descending, then alphabetically."""
@@ -439,6 +647,8 @@ class ChromeHoppingApp(rumps.App):
             self.menu.add(rumps.separator)
 
         self.menu.add(rumps.MenuItem("Rename profile…", callback=self.rename_profile))
+        self.menu.add(rumps.MenuItem("Update Dock & Spotlight apps…", callback=self.generate_dock_apps))
+        self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem("About Chrome Hopping…", callback=self.show_about))
         self.menu.add(rumps.separator)
         screen_label = "✓ Move to this screen" if self.move_to_cursor_screen else "  Move to this screen"
@@ -518,16 +728,35 @@ class ChromeHoppingApp(rumps.App):
             self.update_menu()
 
     def show_about(self, _=None):
+        install_dir = os.path.dirname(os.path.abspath(__file__))
+        lines = [
+            "Chrome Hopping  v1.0.0",
+            "",
+            "Switch between Chrome profiles instantly from your",
+            "menu bar, Dock, or Spotlight. Auto-detects all your",
+            "profiles, tracks open windows, and brings any",
+            "profile to front in one click or a keyboard shortcut.",
+            "",
+            f"Profiles found:   {len(self.profiles)}",
+            f"Install path:     {install_dir}",
+            f"Log file:         {LOG_PATH}",
+            "",
+            "By Amir Tito",
+            "Website:   amirtito.com/chrome_hopping",
+            "License:   PolyForm Noncommercial 1.0.0",
+        ]
+        msg_parts = " & return & ".join(f'"{ln}"' for ln in lines)
         script = (
-            'display dialog "Chrome Hopping v1.0.0\n\n'
-            'Instant switching between Chrome profiles\nfrom your macOS menu bar.\n\n'
-            'By Amir Tito\n'
-            'github.com/tito-sec/Chrome_Hopping\n\n'
-            'License: PolyForm Noncommercial 1.0.0\n'
-            'Free for personal use." '
-            'with title "About Chrome Hopping" '
-            'buttons {"Close"} default button "Close" '
-            'with icon note'
+            f"set msg to {msg_parts}\n"
+            'set choice to button returned of '
+            '(display dialog msg with title "Chrome Hopping" '
+            'buttons {"Website", "License", "Close"} '
+            'default button "Close" with icon note)\n'
+            'if choice is "Website" then\n'
+            '    open location "https://amirtito.com/chrome_hopping/"\n'
+            'else if choice is "License" then\n'
+            '    open location "https://polyformproject.org/licenses/noncommercial/1.0.0/"\n'
+            'end if'
         )
         run_applescript(script)
 
