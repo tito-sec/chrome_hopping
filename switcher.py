@@ -715,7 +715,7 @@ class ChromeHoppingApp(rumps.App):
             "Switch between Chrome profiles instantly from your menu bar, Dock, or Spotlight. Auto-detects all profiles, tracks open windows, and brings any profile to front in one click.",
             "",
             "Dock & Spotlight:",
-            "Go to ⚙ Settings → \"Update Dock & Spotlight apps…\" to generate",
+            "Go to ⚙ Settings → Update Dock & Spotlight apps to generate",
             "a dedicated .app for each profile in ~/Applications/Chrome Profiles.",
             "Drag any app to your Dock for one-click switching, or press",
             "⌘Space and type the profile name to launch it from Spotlight.",
