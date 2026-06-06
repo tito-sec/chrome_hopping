@@ -730,21 +730,21 @@ class ChromeHoppingApp(rumps.App):
 
     def show_about(self, _=None):
         install_dir = os.path.dirname(os.path.abspath(__file__))
+        home = os.path.expanduser("~")
+        install_short = install_dir.replace(home, "~")
+        log_short = LOG_PATH.replace(home, "~")
         lines = [
             "Chrome Hopping  v1.0.0",
             "",
-            "Switch between Chrome profiles instantly from your",
-            "menu bar, Dock, or Spotlight. Auto-detects all your",
-            "profiles, tracks open windows, and brings any",
-            "profile to front in one click or a keyboard shortcut.",
+            "Switch between Chrome profiles instantly from your menu bar, Dock, or Spotlight. Auto-detects all profiles, tracks open windows, and brings any profile to front in one click.",
             "",
-            f"Profiles found:   {len(self.profiles)}",
-            f"Install path:     {install_dir}",
-            f"Log file:         {LOG_PATH}",
+            f"Profiles found: {len(self.profiles)}",
+            f"Install path: {install_short}",
+            f"Log file: {log_short}",
             "",
             "By Amir Tito",
-            "Website:   amirtito.com/chrome_hopping",
-            "License:   PolyForm Noncommercial 1.0.0",
+            "Website: amirtito.com/chrome_hopping",
+            "License: PolyForm Noncommercial 1.0.0",
         ]
         msg_parts = " & return & ".join(f'"{ln}"' for ln in lines)
         script = (
