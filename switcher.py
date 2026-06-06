@@ -734,14 +734,12 @@ class ChromeHoppingApp(rumps.App):
             f"set msg to {msg_parts}\n"
             'set choice to button returned of '
             '(display dialog msg with title "Chrome Hopping" '
-            'buttons {"Website", "GitHub", "License", "Close"} '
+            'buttons {"Website", "GitHub", "Close"} '
             'default button "Close" with icon note)\n'
             'if choice is "Website" then\n'
             '    do shell script "open https://amirtito.com/chrome_hopping/"\n'
             'else if choice is "GitHub" then\n'
             '    do shell script "open https://github.com/tito-sec/chrome_hopping"\n'
-            'else if choice is "License" then\n'
-            '    do shell script "open https://polyformproject.org/licenses/noncommercial/1.0.0"\n'
             'end if'
         )
         run_applescript(script)
