@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chrome Hopping — Switch Chrome profiles instantly</title>
-  <meta name="description" content="macOS menu bar app that lets you switch between Chrome profiles instantly. One click or one keystroke." />
+  <meta name="description" content="macOS menu bar app that lets you switch between Chrome profiles instantly from the menu bar, Dock, or Spotlight." />
   <meta property="og:title" content="Chrome Hopping" />
   <meta property="og:description" content="Switch between Chrome profiles instantly from your macOS menu bar." />
   <meta property="og:image" content="screenshot.png" />
@@ -285,6 +285,7 @@
     <div class="nav-logo">⇄ Chrome <span>Hopping</span></div>
     <div class="nav-links">
       <a href="#features">Features</a>
+      <a href="#dock-spotlight">Dock &amp; Spotlight</a>
       <a href="#install">Install</a>
       <a href="https://github.com/tito-sec/chrome_hopping">GitHub</a>
     </div>
@@ -292,9 +293,9 @@
 
   <!-- Hero -->
   <section class="hero">
-    <div class="hero-badge">Free for personal use · macOS</div>
+    <div class="hero-badge">v1.1 · Free for personal use · macOS</div>
     <h1>Switch Chrome profiles<br /><em>instantly</em></h1>
-    <p>A tiny menu bar app that lives outside Chrome. One click brings <em style="color:var(--text);font-style:normal;">all</em> your profile's windows to the front, centered on the screen your mouse is already on.</p>
+    <p>A tiny menu bar app that lives outside Chrome. Switch from the menu bar, Dock, or Spotlight — one click brings <em style="color:var(--text);font-style:normal;">all</em> your profile's windows to the front, centered on the screen your mouse is already on.</p>
     <div class="hero-actions">
       <a href="#install" class="btn btn-primary">
         ↓ Install now
@@ -344,6 +345,39 @@
         <div class="feature-icon">🚀</div>
         <h3>Opens closed profiles too</h3>
         <p>Clicking a profile with no open windows launches Chrome directly into it. Auto-detects, no manual setup.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <h3>Dock access</h3>
+        <p>Generate a native macOS app for each Chrome profile. Drag any of them to your Dock for one-click switching without ever opening the menu bar.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Spotlight integration</h3>
+        <p>Press ⌘Space, type a profile name, and hit Enter. Chrome Hopping switches you straight to that profile — no mouse needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dock & Spotlight how-to -->
+  <section class="section" id="dock-spotlight" style="padding-top:0">
+    <div class="section-label">How to set up</div>
+    <h2>Dock &amp; Spotlight</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+      <div class="feature-card">
+        <div class="feature-icon">1️⃣</div>
+        <h3>Generate the apps</h3>
+        <p>Click <strong>⇄</strong> in the menu bar → <strong>⚙ Settings</strong> → <strong>Update Dock &amp; Spotlight apps</strong>. A dedicated .app with a colored icon is created for every profile in <code style="font-size:12px;background:#0a0a0a;padding:2px 5px;border-radius:4px;">~/Applications/Chrome Profiles</code>.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">2️⃣</div>
+        <h3>Add to Dock</h3>
+        <p>Open <strong>~/Applications/Chrome Profiles</strong> in Finder and drag any profile app onto your Dock. One click on the icon switches directly to that profile.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">3️⃣</div>
+        <h3>Search with Spotlight</h3>
+        <p>Press <strong>⌘Space</strong>, start typing your profile name (e.g. "Work", "Personal"), and press Enter. Chrome Hopping opens and brings that profile to the front instantly.</p>
       </div>
     </div>
   </section>

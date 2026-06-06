@@ -710,7 +710,7 @@ class ChromeHoppingApp(rumps.App):
         install_short = install_dir.replace(home, "~")
         log_short = LOG_PATH.replace(home, "~")
         lines = [
-            "Chrome Hopping v1.0.0",
+            "Chrome Hopping v1.1.0",
             "",
             "Instantly switch between Chrome profiles from your Menu bar, Dock, or Spotlight.",
             "Chrome Hopping automatically brings any Chrome profile to the foreground",

@@ -1,10 +1,12 @@
 # Chrome Hopping
 
-> Switch between Chrome profiles instantly from your macOS menu bar.
+> Switch between Chrome profiles instantly from your macOS menu bar, Dock, or Spotlight.
 
-If you use multiple Google accounts — work, freelance, personal — Chrome creates a completely separate browser instance for each one. Chrome Hopping lives in your menu bar and lets you jump between them in one click or one keystroke.
+If you use multiple Google accounts — work, freelance, personal — Chrome creates a completely separate browser instance for each one. Chrome Hopping lets you jump between them in one click or one keystroke, from wherever you are.
 
 Most switchers only handle a single window per profile. Chrome Hopping raises **all open windows** for the selected profile at once. It always places them at **80% of the screen, centered**, so you're never hunting for a window buried behind something else. If you have multiple monitors, it moves the windows to **whichever screen your mouse is on** — no dragging required. You can also **minimize all other profiles** with Option+click to cut the noise, and the **⌘§ hotkey cycles through every profile** — including ones with minimized windows, not just the visible ones.
+
+In v1.1 you can also generate a dedicated **native macOS app** for each profile — drag them to your Dock or launch any profile directly from **⌘Space Spotlight**.
 
 ![Chrome Hopping menu bar screenshot](docs/screenshot.png)
 
@@ -60,9 +62,26 @@ Go to **System Settings → Privacy & Security** and add Terminal to both lists.
 | Cycle profiles with keyboard | Press **⌘§** — cycles all profiles, even minimized ones |
 | Minimize all other profiles | **Option+click** a profile name |
 | Open a profile that's not running | Click it — Chrome launches automatically |
+| Switch from the Dock | See setup below — drag a profile app to your Dock |
+| Switch from Spotlight | Press **⌘Space**, type a profile name, press Enter |
 | Rename a profile | **⇄** → Rename profile… |
 | Refresh the profile list | **⇄** → Refresh now |
 | Move windows to your current screen | **⇄** → ✓ Move to this screen (on by default) |
+
+### Dock & Spotlight setup
+
+Chrome Hopping can generate a native macOS `.app` for each of your profiles, complete with a colored icon. These apps live in `~/Applications/Chrome Profiles` and let you switch profiles without touching the menu bar.
+
+**Step 1 — Generate the apps**
+Click **⇄** in the menu bar → **⚙ Settings** → **Update Dock & Spotlight apps**.
+A colored `.app` is created for every profile. Stale apps are removed automatically.
+
+**Step 2 — Add to Dock**
+Open `~/Applications/Chrome Profiles` in Finder and drag any profile app to your Dock.
+
+**Step 3 — Use Spotlight**
+Press **⌘Space**, type a profile name (e.g. "Work"), and press Enter.
+Chrome Hopping switches you straight to that profile.
 
 ### What makes it different
 
@@ -71,6 +90,7 @@ Go to **System Settings → Privacy & Security** and add Terminal to both lists.
 - **Follows your mouse across monitors** — on multi-screen setups, windows move to whichever screen your cursor is on when you click.
 - **Keyboard cycling includes minimized profiles** — ⌘§ rotates through every profile, not just ones with visible windows.
 - **Option+click to silence other profiles** — minimizes all other profiles' windows instantly so you can focus on one context.
+- **Dock & Spotlight apps** — one-click profile switching from the Dock or ⌘Space, with colored per-profile icons.
 
 ---
 
