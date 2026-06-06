@@ -714,12 +714,19 @@ class ChromeHoppingApp(rumps.App):
             "",
             "Switch between Chrome profiles instantly from your menu bar, Dock, or Spotlight. Auto-detects all profiles, tracks open windows, and brings any profile to front in one click.",
             "",
+            "Dock & Spotlight:",
+            "Go to ⚙ Settings → \"Update Dock & Spotlight apps…\" to generate",
+            "a dedicated .app for each profile in ~/Applications/Chrome Profiles.",
+            "Drag any app to your Dock for one-click switching, or press",
+            "⌘Space and type the profile name to launch it from Spotlight.",
+            "",
             f"Profiles found: {len(self.profiles)}",
             f"Install path: {install_short}",
             f"Log file: {log_short}",
             "",
             "By Amir Tito",
             "Website: amirtito.com/chrome_hopping",
+            "GitHub: github.com/tito-sec/chrome_hopping",
             "License: PolyForm Noncommercial 1.0.0",
         ]
         msg_parts = " & return & ".join(f'"{ln}"' for ln in lines)
@@ -727,10 +734,12 @@ class ChromeHoppingApp(rumps.App):
             f"set msg to {msg_parts}\n"
             'set choice to button returned of '
             '(display dialog msg with title "Chrome Hopping" '
-            'buttons {"Website", "License", "Close"} '
+            'buttons {"Website", "GitHub", "License", "Close"} '
             'default button "Close" with icon note)\n'
             'if choice is "Website" then\n'
             '    do shell script "open https://amirtito.com/chrome_hopping/"\n'
+            'else if choice is "GitHub" then\n'
+            '    do shell script "open https://github.com/tito-sec/chrome_hopping"\n'
             'else if choice is "License" then\n'
             '    do shell script "open https://polyformproject.org/licenses/noncommercial/1.0.0"\n'
             'end if'
