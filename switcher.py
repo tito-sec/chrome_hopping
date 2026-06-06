@@ -279,8 +279,8 @@ def move_window_to_screen(window_title, screen_frame):
     )
     run_applescript(script)
 
-def _make_icon_png(color_hex, letter, size, out_path):
-    from AppKit import (NSImage, NSBitmapImageRep, NSColor, NSBezierPath,
+def _make_profile_nsimage(color_hex, letter, size=512):
+    from AppKit import (NSImage, NSColor, NSBezierPath,
                         NSString, NSFont, NSMutableParagraphStyle,
                         NSFontAttributeName, NSForegroundColorAttributeName,
                         NSParagraphStyleAttributeName)
@@ -312,40 +312,15 @@ def _make_icon_png(color_hex, letter, size, out_path):
     y = (size - text_h) / 2.0
     ns_str.drawInRect_withAttributes_(NSMakeRect(0, y, size, text_h), attrs)
     img.unlockFocus()
-
-    tiff = img.TIFFRepresentation()
-    rep = NSBitmapImageRep.imageRepWithData_(tiff)
-    try:
-        from AppKit import NSBitmapImageFileTypePNG as _PNG
-    except ImportError:
-        _PNG = 4
-    png_data = rep.representationUsingType_properties_(_PNG, None)
-    with open(out_path, 'wb') as f:
-        f.write(bytes(png_data))
+    return img
 
 
-def make_profile_icns(display_name_str, color_hex, icns_path):
-    letter = (display_name_str[0] if display_name_str else "?").upper()
-    with tempfile.TemporaryDirectory(suffix='.iconset') as iconset_dir:
-        base_png = os.path.join(iconset_dir, '_base.png')
-        _make_icon_png(color_hex, letter, 512, base_png)
-        for fname, sz in [
-            ('icon_16x16.png', 16), ('icon_16x16@2x.png', 32),
-            ('icon_32x32.png', 32), ('icon_32x32@2x.png', 64),
-            ('icon_128x128.png', 128), ('icon_128x128@2x.png', 256),
-            ('icon_256x256.png', 256), ('icon_256x256@2x.png', 512),
-            ('icon_512x512.png', 512),
-        ]:
-            subprocess.run(
-                ['sips', '-z', str(sz), str(sz), base_png,
-                 '--out', os.path.join(iconset_dir, fname)],
-                capture_output=True
-            )
-        os.remove(base_png)
-        subprocess.run(
-            ['iconutil', '-c', 'icns', iconset_dir, '-o', icns_path],
-            capture_output=True, check=True
-        )
+def set_app_icon(app_path, color_hex, display_name):
+    """Set app icon via NSWorkspace — works even for applet-signature bundles."""
+    from AppKit import NSWorkspace
+    letter = (display_name[0] if display_name else "?").upper()
+    img = _make_profile_nsimage(color_hex, letter)
+    NSWorkspace.sharedWorkspace().setIcon_forFile_options_(img, app_path, 0)
 
 
 def generate_profile_apps(profiles, custom_names):
@@ -391,13 +366,8 @@ def generate_profile_apps(profiles, custom_names):
         with open(plist_path, 'wb') as f:
             plistlib.dump(plist_data, f)
 
-        resources_dir = os.path.join(app_path, "Contents", "Resources")
-        icon_name = plist_data.get('CFBundleIconFile', 'applet')
-        if not icon_name.endswith('.icns'):
-            icon_name += '.icns'
-        icns_path = os.path.join(resources_dir, icon_name)
         try:
-            make_profile_icns(name, color, icns_path)
+            set_app_icon(app_path, color, name)
         except Exception as e:
             log(f"Icon generation failed for {name}: {e}")
 
@@ -405,7 +375,13 @@ def generate_profile_apps(profiles, custom_names):
         if item.endswith(".app") and item not in generated:
             shutil.rmtree(os.path.join(PROFILE_APPS_DIR, item), ignore_errors=True)
 
+    # Touch every app bundle so macOS invalidates its icon cache entry
+    for item in generated:
+        subprocess.run(['touch', os.path.join(PROFILE_APPS_DIR, item)], capture_output=True)
+
     subprocess.run(['mdimport', PROFILE_APPS_DIR], capture_output=True)
+    subprocess.run(['killall', 'iconservicesd'], capture_output=True)
+    subprocess.run(['killall', 'Dock'], capture_output=True)
     log(f"Generated {len(profiles)} profile apps in {PROFILE_APPS_DIR}")
     return len(profiles)
 
