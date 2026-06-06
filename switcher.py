@@ -754,9 +754,9 @@ class ChromeHoppingApp(rumps.App):
             'buttons {"Website", "License", "Close"} '
             'default button "Close" with icon note)\n'
             'if choice is "Website" then\n'
-            '    open location "https://amirtito.com/chrome_hopping/"\n'
+            '    do shell script "open https://amirtito.com/chrome_hopping/"\n'
             'else if choice is "License" then\n'
-            '    open location "https://polyformproject.org/licenses/noncommercial/1.0.0/"\n'
+            '    do shell script "open https://polyformproject.org/licenses/noncommercial/1.0.0/"\n'
             'end if'
         )
         run_applescript(script)
