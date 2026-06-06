@@ -646,14 +646,16 @@ class ChromeHoppingApp(rumps.App):
 
             self.menu.add(rumps.separator)
 
-        self.menu.add(rumps.MenuItem("Rename profile…", callback=self.rename_profile))
-        self.menu.add(rumps.MenuItem("Update Dock & Spotlight apps…", callback=self.generate_dock_apps))
+        screen_label = "✓ Move to this screen" if self.move_to_cursor_screen else "  Move to this screen"
+        settings = rumps.MenuItem("⚙ Settings")
+        settings.add(rumps.MenuItem("Rename profile…", callback=self.rename_profile))
+        settings.add(rumps.MenuItem("Update Dock & Spotlight apps…", callback=self.generate_dock_apps))
+        settings.add(rumps.separator)
+        settings.add(rumps.MenuItem(screen_label, callback=self.toggle_screen_move))
+        settings.add(rumps.MenuItem("Refresh now", callback=self.manual_refresh))
+        self.menu.add(settings)
         self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem("About Chrome Hopping…", callback=self.show_about))
-        self.menu.add(rumps.separator)
-        screen_label = "✓ Move to this screen" if self.move_to_cursor_screen else "  Move to this screen"
-        self.menu.add(rumps.MenuItem(screen_label, callback=self.toggle_screen_move))
-        self.menu.add(rumps.MenuItem("Refresh now", callback=self.manual_refresh))
         self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem("Quit", callback=rumps.quit_application))
 
@@ -710,7 +712,6 @@ class ChromeHoppingApp(rumps.App):
         timer.stop()
         self.update_menu()
 
-    @rumps.clicked("Rename profile…")
     def rename_profile(self, _=None):
         if not self.profiles:
             show_alert("No profiles found.")
@@ -764,7 +765,6 @@ class ChromeHoppingApp(rumps.App):
         self.move_to_cursor_screen = not self.move_to_cursor_screen
         self.update_menu()
 
-    @rumps.clicked("Refresh now")
     def manual_refresh(self, _=None):
         self.refresh_data()
         self.update_menu()
