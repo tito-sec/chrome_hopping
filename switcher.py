@@ -263,7 +263,7 @@ def move_window_to_screen(window_title, screen_frame):
     ty = int(quartz_y + screen_frame.size.height * 0.1)
     tw = int(screen_frame.size.width * 0.8)
     th = int(screen_frame.size.height * 0.8)
-    safe = window_title[:40].replace('"', '\\"')
+    safe = window_title[:40].replace('\\', '\\\\').replace('"', '\\"')
     script = (
         'tell application "System Events"\n'
         '    tell process "Google Chrome"\n'
@@ -386,22 +386,26 @@ def generate_profile_apps(profiles, custom_names):
     return len(profiles)
 
 
+def _as_str(s):
+    """Escape a string for safe embedding inside an AppleScript double-quoted literal."""
+    return s.replace('\\', '\\\\').replace('"', '\\"')
+
 def ask_text(prompt, default=""):
-    script = f'display dialog "{prompt}" default answer "{default}" with title "Chrome Hopping"'
+    script = f'display dialog "{_as_str(prompt)}" default answer "{_as_str(default)}" with title "Chrome Hopping"'
     result, _ = run_applescript(script)
     match = re.search(r'text returned:(.*)', result)
     return match.group(1).strip() if match else None
 
 def ask_choice(prompt, choices):
-    items = ", ".join(f'"{c}"' for c in choices)
-    script = f'choose from list {{{items}}} with title "Chrome Hopping" with prompt "{prompt}" OK button name "Select" cancel button name "Cancel"'
+    items = ", ".join(f'"{_as_str(c)}"' for c in choices)
+    script = f'choose from list {{{items}}} with title "Chrome Hopping" with prompt "{_as_str(prompt)}" OK button name "Select" cancel button name "Cancel"'
     result, _ = run_applescript(script)
     if result == "false" or not result:
         return None
     return result.strip()
 
 def show_alert(msg):
-    run_applescript(f'display alert "Chrome Hopping" message "{msg}"')
+    run_applescript(f'display alert "Chrome Hopping" message "{_as_str(msg)}"')
 
 
 class ChromeHoppingApp(rumps.App):

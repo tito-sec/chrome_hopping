@@ -47,7 +47,7 @@ echo "→  Creating virtual environment..."
 echo "✓  Virtual environment created"
 
 echo "→  Installing dependencies..."
-"$INSTALL_DIR/venv/bin/pip" install rumps pyobjc-framework-Cocoa pyobjc-framework-Quartz --quiet
+"$INSTALL_DIR/venv/bin/pip" install "rumps==0.4.0" "pyobjc-framework-Cocoa==12.2" "pyobjc-framework-Quartz==12.2" --quiet
 echo "✓  Dependencies installed"
 
 # The Python we'll actually run is inside the venv
