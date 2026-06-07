@@ -55,21 +55,6 @@ FALLBACK_COLORS = [
     "#f7d4a0",  # soft amber
 ]
 
-# Each profile index gets a unique shape+color combo
-PROFILE_ICONS = [
-    "🟡",  # yellow square
-    "🟢",  # green square
-    "🔵",  # blue square
-    "🟣",  # purple square
-    "🔶",  # orange diamond
-    "🔷",  # blue diamond
-    "♥️",  # red heart
-    "♦️",  # red diamond
-    "♠️",  # black spade
-    "♣️",  # black club
-    "🩷",  # pink heart
-    "🟠",  # orange circle
-]
 
 def log(msg):
     os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
@@ -590,9 +575,22 @@ class ChromeHoppingApp(rumps.App):
             key=lambda p: (-self.usage.get(p["folder"], 0), self.display_name(p).lower())
         )
 
-    def color_dot(self, profile):
-        idx = profile.get("color_idx", 0)
-        return PROFILE_ICONS[idx % len(PROFILE_ICONS)]
+    def _menu_icon(self, profile):
+        """Return a small NSImage colored circle matching the Dock icon palette."""
+        color = profile.get("color", FALLBACK_COLORS[0])
+        letter = (self.display_name(profile)[0]).upper()
+        img = _make_profile_nsimage(color, letter, size=32)
+        img.setSize_((18, 18))
+        return img
+
+    def _add_profile_item(self, profile, label):
+        item = rumps.MenuItem(label, callback=self.on_profile_click)
+        try:
+            item._menuitem.setImage_(self._menu_icon(profile))
+        except Exception as e:
+            log(f"Menu icon error: {e}")
+        self.profile_map[label] = profile["folder"]
+        self.menu.add(item)
 
     def update_menu(self):
         self.menu.clear()
@@ -608,21 +606,17 @@ class ChromeHoppingApp(rumps.App):
         else:
             for p in open_profiles:
                 win_count = len(self.window_map.get(p["folder"], []))
-                dot = self.color_dot(p)
                 name = self.display_name(p)
-                label = f"{dot} {name}  · {win_count}"
-                self.profile_map[label] = p["folder"]
-                self.menu.add(rumps.MenuItem(label, callback=self.on_profile_click))
+                label = f"{name}  · {win_count}"
+                self._add_profile_item(p, label)
 
             if open_profiles and closed_profiles:
                 self.menu.add(rumps.separator)
 
             for p in closed_profiles:
-                dot = self.color_dot(p)
                 name = self.display_name(p)
-                label = f"{dot} {name}  (closed)"
-                self.profile_map[label] = p["folder"]
-                self.menu.add(rumps.MenuItem(label, callback=self.on_profile_click))
+                label = f"{name}  (closed)"
+                self._add_profile_item(p, label)
 
             self.menu.add(rumps.separator)
 
