@@ -93,6 +93,16 @@ launchctl unload "$PLIST_PATH" 2>/dev/null || true
 launchctl load "$PLIST_PATH"
 echo "✓  App started"
 
+echo "→  Adding Chrome Profiles folder to Dock..."
+"$VENV_PYTHON" - << 'PYEOF'
+import sys, os
+sys.path.insert(0, os.path.expanduser("~/.chrome-hopping"))
+from switcher import add_profiles_folder_to_dock, PROFILE_APPS_DIR
+os.makedirs(PROFILE_APPS_DIR, exist_ok=True)
+add_profiles_folder_to_dock()
+PYEOF
+echo "✓  Chrome Profiles folder added to Dock"
+
 echo ""
 echo "────────────────────────────────────"
 echo "✅  Done! Look for the ⇄ icon in your menu bar."

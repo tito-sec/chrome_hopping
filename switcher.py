@@ -366,9 +366,57 @@ def generate_profile_apps(profiles, custom_names):
 
     subprocess.run(['mdimport', PROFILE_APPS_DIR], capture_output=True)
     subprocess.run(['killall', 'iconservicesd'], capture_output=True)
-    subprocess.run(['killall', 'Dock'], capture_output=True)
+    add_profiles_folder_to_dock()
     log(f"Generated {len(profiles)} profile apps in {PROFILE_APPS_DIR}")
     return len(profiles)
+
+
+def add_profiles_folder_to_dock():
+    """Add ~/Applications/Chrome Profiles as a Dock stack (idempotent)."""
+    dock_plist = os.path.expanduser("~/Library/Preferences/com.apple.dock.plist")
+    folder_url = "file://" + PROFILE_APPS_DIR.replace(" ", "%20") + "/"
+    try:
+        # Read current state through cfprefsd (authoritative)
+        result = subprocess.run(
+            ['defaults', 'read', 'com.apple.dock', 'persistent-others'],
+            capture_output=True, text=True
+        )
+        # Check if already present by reading the plist file
+        with open(dock_plist, 'rb') as f:
+            dock_data = plistlib.load(f)
+        others = dock_data.get('persistent-others', [])
+        for item in others:
+            if item.get('tile-data', {}).get('file-data', {}).get('_CFURLString') == folder_url:
+                return  # already in Dock
+        others.append({
+            'tile-data': {
+                'arrangement': 1,
+                'displayas': 1,
+                'file-data': {
+                    '_CFURLString': folder_url,
+                    '_CFURLStringType': 15,
+                },
+                'file-label': 'Chrome Profiles',
+                'showas': 2,  # grid view
+            },
+            'tile-type': 'directory-tile',
+        })
+        dock_data['persistent-others'] = others
+        with open(dock_plist, 'wb') as f:
+            plistlib.dump(dock_data, f)
+        # Flush user cfprefsd cache so Dock reads our file on restart
+        subprocess.run(['killall', '-u', os.environ.get('USER', ''), 'cfprefsd'],
+                       capture_output=True)
+        time.sleep(0.3)
+        # Force-restart Dock via launchctl (no graceful exit = no plist overwrite)
+        uid = os.getuid()
+        subprocess.run(
+            ['launchctl', 'kickstart', '-k', f'gui/{uid}/com.apple.Dock.agent'],
+            capture_output=True
+        )
+        log("Added Chrome Profiles folder to Dock")
+    except Exception as e:
+        log(f"add_profiles_folder_to_dock error: {e}")
 
 
 def _as_str(s):
